@@ -17,6 +17,8 @@ import Cart from './pages/Cart'
 import { useCart } from './context/CartContext'
 import './App.css'
 
+import About from './pages/About'
+
 function Section({ title, items }) {
   const { addItem } = useCart()
 
@@ -117,6 +119,7 @@ function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/cart" element={<Cart />} />
+      <Route path="/about" element={<About />} />
       <Route path="/admin" element={<Admin />} />
     </Routes>
   )

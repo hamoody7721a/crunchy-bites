@@ -1329,3 +1329,205 @@
     font-size: 1.15rem;
   }
 }
+/* ===== Header Logo ===== */
+.header-logo {
+  text-decoration: none;
+}
+
+/* ===== About Page ===== */
+.about-section {
+  margin-bottom: 60px;
+}
+
+.about-card {
+  background: linear-gradient(145deg, var(--bg-card), var(--bg-secondary));
+  padding: 50px 40px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-gold);
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.about-icon {
+  font-size: 5rem;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 8px 24px rgba(212, 175, 55, 0.4));
+}
+
+.about-card h2 {
+  font-family: 'El Messiri', serif;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.about-text {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 2;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.service-card {
+  background: linear-gradient(145deg, var(--bg-card), var(--bg-secondary));
+  padding: 30px 24px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  text-align: center;
+  transition: all 0.4s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-gold);
+}
+
+.service-icon {
+  font-size: 3rem;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.3));
+}
+
+.service-card h3 {
+  font-family: 'El Messiri', serif;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.service-card p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.contact-card {
+  background: linear-gradient(145deg, var(--bg-card), var(--bg-secondary));
+  padding: 30px 24px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.contact-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-gold);
+}
+
+.contact-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.contact-card h3 {
+  font-family: 'El Messiri', serif;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: var(--gold-light);
+}
+
+.contact-card p,
+.contact-card a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  transition: color 0.3s;
+}
+
+.contact-card a:hover {
+  color: var(--gold-light);
+}
+
+.whatsapp-link {
+  display: inline-block;
+  background: linear-gradient(135deg, #25D366, #128C7E);
+  color: white !important;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-weight: bold;
+  margin-top: 4px;
+  transition: all 0.3s ease;
+}
+
+.whatsapp-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+.qr-card {
+  background: linear-gradient(145deg, var(--bg-card), var(--bg-secondary));
+  padding: 40px 30px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-gold);
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.qr-wrapper {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  display: inline-block;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  margin-bottom: 24px;
+}
+
+.qr-hint {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
+.qr-url {
+  color: var(--gold-light);
+  font-size: 0.9rem;
+  background: rgba(212, 175, 55, 0.08);
+  padding: 8px 16px;
+  border-radius: 10px;
+  display: inline-block;
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .about-card {
+    padding: 35px 24px;
+  }
+
+  .about-icon {
+    font-size: 4rem;
+  }
+
+  .about-card h2 {
+    font-size: 1.6rem;
+  }
+
+  .services-grid,
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
