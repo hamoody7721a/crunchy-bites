@@ -13,6 +13,7 @@ import Header from './components/Header'
 import Card from './components/Card'
 import Footer from './components/Footer'
 import Admin from './pages/Admin'
+import Cart from './pages/Cart'
 import { useCart } from './context/CartContext'
 import './App.css'
 
@@ -40,12 +41,12 @@ function Section({ title, items }) {
         {items.map(item => (
           <SwiperSlide key={item.id}>
             <Card
-             title={item.name}
-             price={item.price}
-             emoji={item.emoji}
-             image={item.image}
-             onAdd={() => addItem(item)}
-            />  
+              title={item.name}
+              price={item.price}
+              emoji={item.emoji}
+              image={item.image}
+              onAdd={() => addItem(item)}
+            />
           </SwiperSlide>
         ))}
       </Swiper>
@@ -115,6 +116,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/cart" element={<Cart />} />
       <Route path="/admin" element={<Admin />} />
     </Routes>
   )

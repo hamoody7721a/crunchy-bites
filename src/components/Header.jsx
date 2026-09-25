@@ -1,21 +1,18 @@
+import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
-function Header({ onCartClick }) {
+function Header() {
   const { count } = useCart()
 
   return (
     <header className="header">
       <h1>Crunchy Bites 🍔</h1>
       <nav>
-        <a href="#">الرئيسية</a>
-        <a href="#">القائمة</a>
-        <a href="#" className="cart-link" onClick={(e) => {
-          e.preventDefault()
-          onCartClick()
-        }}>
+        <Link to="/">الرئيسية</Link>
+        <Link to="/cart" className="cart-link">
           🛒 السلة
           {count > 0 && <span className="cart-badge">{count}</span>}
-        </a>
+        </Link>
       </nav>
     </header>
   )
