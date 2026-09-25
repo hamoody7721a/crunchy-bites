@@ -4,7 +4,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 
 // ⚠️ غيّر هذا الرقم لرقم واتساب المطعم (بدون + وبدون 00)
-const WHATSAPP_NUMBER = '963999999999'
+const WHATSAPP_NUMBER = '963938831878'
 
 function Cart() {
   const { items, removeItem, updateQuantity, clearCart, total } = useCart()

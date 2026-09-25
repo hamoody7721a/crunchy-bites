@@ -1,7 +1,10 @@
 function Footer() {
   return (
     <footer className="footer">
-      <p>© 2026 Crunchy Bites - كل الحقوق محفوظة</p>
+      <div className="footer-content">
+        <h3>🍔 Crunchy Bites</h3>
+        <p>© 2026 جميع الحقوق محفوظة</p>
+      </div>
     </footer>
   )
 }

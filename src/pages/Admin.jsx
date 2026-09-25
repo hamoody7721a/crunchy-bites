@@ -54,7 +54,7 @@ function Admin() {
   // 🔐 تسجيل الدخول
   function handleLogin(e) {
     e.preventDefault()
-    if (password === 'crunchy123') {
+    if (password === 'CrunchyBites@2026') {
       setIsLoggedIn(true)
       setError('')
     } else {
