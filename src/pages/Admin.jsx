@@ -19,6 +19,7 @@ function Admin() {
   const [price, setPrice] = useState('')
   const [emoji, setEmoji] = useState('')
   const [image, setImage] = useState('')
+  const [ingredients, setIngredients] = useState('')
   const [category, setCategory] = useState('food')
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
@@ -129,6 +130,7 @@ function Admin() {
         price: Number(price),
         emoji: emoji.trim() || '🍽️',
         image: image || '',
+        ingredients: ingredients.trim(),
         category: category,
       })
 
@@ -137,6 +139,7 @@ function Admin() {
       setPrice('')
       setEmoji('')
       setImage('')
+      setIngredients('')
       setCategory('food')
 
       fetchProducts()
@@ -252,7 +255,6 @@ function Admin() {
                 </div>
 
                 {editingId === p.id ? (
-                  // وضع التعديل
                   <>
                     <input
                       type="text"
@@ -284,7 +286,6 @@ function Admin() {
                     </div>
                   </>
                 ) : (
-                  // وضع العرض
                   <>
                     <div className="product-row-info">
                       <h4>{p.name}</h4>
@@ -355,6 +356,20 @@ function Admin() {
                 maxLength={2}
               />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>المكونات (اختياري)</label>
+            <textarea
+              placeholder="مثال: خبز، لحم، جبن، خس، طماطم"
+              value={ingredients}
+              onChange={(e) => setIngredients(e.target.value)}
+              rows={3}
+              className="form-textarea"
+            />
+            <small className="form-hint">
+              💡 اكتب المكونات مفصولة بفاصلة (,)
+            </small>
           </div>
 
           <div className="form-group">
