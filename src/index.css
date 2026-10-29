@@ -1,3 +1,4 @@
+@import "tailwindcss";
 :root {
   /* 🎨 ألوان فاخرة داكنة */
   --bg-primary: #0a0a0a;

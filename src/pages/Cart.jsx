@@ -19,7 +19,8 @@ function Cart() {
     message += '*الأصناف:*\n'
 
     items.forEach((item, index) => {
-      message += `${index + 1}. ${item.emoji || '🍽️'} ${item.name} × ${item.quantity} = ${item.price * item.quantity} ل.س\n`
+      const typeText = item.typeLabel ? ` (${item.typeLabel})` : ''
+      message += `${index + 1}. ${item.emoji || '🍽️'} ${item.name}${typeText} × ${item.quantity} = ${item.price * item.quantity} ل.س\n`
     })
 
     message += `\n*المجموع:* ${total} ل.س\n`
@@ -48,18 +49,29 @@ function Cart() {
 
             <div className="cart-list">
               {items.map(item => (
-                <div key={item.id} className="cart-item">
-                  <div className="cart-item-emoji">{item.emoji || '🍽️'}</div>
+                <div key={item.uniqueId} className="cart-item">
+                  <div className="cart-item-thumb">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} />
+                    ) : (
+                      <div className="cart-item-emoji">{item.emoji || '🍽️'}</div>
+                    )}
+                  </div>
 
                   <div className="cart-item-info">
-                    <h3>{item.name}</h3>
+                    <h3>
+                      {item.name}
+                      {item.typeLabel && (
+                        <span className="cart-item-type">{item.typeLabel}</span>
+                      )}
+                    </h3>
                     <p>{item.price} ل.س</p>
                   </div>
 
                   <div className="cart-item-qty">
-                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)}>−</button>
+                    <button onClick={() => updateQuantity(item.uniqueId, item.quantity - 1)}>−</button>
                     <span>{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
+                    <button onClick={() => updateQuantity(item.uniqueId, item.quantity + 1)}>+</button>
                   </div>
 
                   <div className="cart-item-total">
@@ -68,7 +80,7 @@ function Cart() {
 
                   <button
                     className="cart-item-remove"
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => removeItem(item.uniqueId)}
                     title="حذف"
                   >
                     🗑️

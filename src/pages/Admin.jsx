@@ -9,29 +9,37 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase'
 
+const CATEGORIES = [
+  { value: 'meat', label: '🥩 لحم' },
+  { value: 'chicken-grilled', label: '🍗 دجاج مشوي' },
+  { value: 'chicken-fried', label: '🍗 دجاج مقلي' },
+  { value: 'salads', label: '🥗 سلطات' },
+  { value: 'cold-sandwiches', label: '🌯 سندويشات باردة' },
+  { value: 'drinks', label: '🥤 مشاريب وحلويات' },
+]
+
 function Admin() {
   const [password, setPassword] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [error, setError] = useState('')
 
-  // بيانات المنتج الجديد
+  // بيانات المنتج
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
+  const [hasTypes, setHasTypes] = useState(false)
+  const [priceSandwich, setPriceSandwich] = useState('')
+  const [priceMeal, setPriceMeal] = useState('')
   const [emoji, setEmoji] = useState('')
   const [image, setImage] = useState('')
   const [ingredients, setIngredients] = useState('')
-  const [category, setCategory] = useState('food')
+  const [category, setCategory] = useState('meat')
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
 
-  // قائمة المنتجات
+  // قائمة المنتجات + تعديل
   const [products, setProducts] = useState([])
   const [loadingProducts, setLoadingProducts] = useState(true)
-
-  // تعديل منتج
   const [editingId, setEditingId] = useState(null)
-  const [editPrice, setEditPrice] = useState('')
-  const [editName, setEditName] = useState('')
 
   // 📥 جلب المنتجات
   async function fetchProducts() {
@@ -112,47 +120,95 @@ function Admin() {
     reader.readAsDataURL(file)
   }
 
-  // ➕ إضافة منتج
-  async function handleAddProduct(e) {
+  // 🔄 تفريغ الحقول
+  function resetForm() {
+    setName('')
+    setPrice('')
+    setHasTypes(false)
+    setPriceSandwich('')
+    setPriceMeal('')
+    setEmoji('')
+    setImage('')
+    setIngredients('')
+    setCategory('meat')
+    setEditingId(null)
+  }
+
+  // ✏️ بدء التعديل
+  function startEdit(product) {
+    setEditingId(product.id)
+    setName(product.name || '')
+    setPrice(product.price || '')
+    setHasTypes(product.hasTypes || false)
+    setPriceSandwich(product.priceSandwich || '')
+    setPriceMeal(product.priceMeal || '')
+    setEmoji(product.emoji || '')
+    setImage(product.image || '')
+    setIngredients(product.ingredients || '')
+    setCategory(product.category || 'meat')
+    setError('')
+    setSuccess('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // ➕ إضافة أو 💾 حفظ
+  async function handleSubmit(e) {
     e.preventDefault()
-    if (!name || !price) {
-      setError('الرجاء ملء الاسم والسعر')
+
+    if (!name) {
+      setError('الرجاء ملء الاسم')
       return
+    }
+
+    if (hasTypes) {
+      if (!priceSandwich || !priceMeal) {
+        setError('الرجاء ملء سعري السندويش والوجبة')
+        return
+      }
+    } else {
+      if (!price) {
+        setError('الرجاء ملء السعر')
+        return
+      }
     }
 
     setSaving(true)
     setError('')
     setSuccess('')
 
+    const productData = {
+      name: name.trim(),
+      hasTypes: hasTypes,
+      price: hasTypes ? 0 : Number(price),
+      priceSandwich: hasTypes ? Number(priceSandwich) : 0,
+      priceMeal: hasTypes ? Number(priceMeal) : 0,
+      emoji: emoji.trim() || '🍽️',
+      image: image || '',
+      ingredients: ingredients.trim(),
+      category: category,
+    }
+
     try {
-      await addDoc(collection(db, 'products'), {
-        name: name.trim(),
-        price: Number(price),
-        emoji: emoji.trim() || '🍽️',
-        image: image || '',
-        ingredients: ingredients.trim(),
-        category: category,
-      })
+      if (editingId) {
+        await updateDoc(doc(db, 'products', editingId), productData)
+        setSuccess('✅ تم تحديث المنتج بنجاح!')
+      } else {
+        await addDoc(collection(db, 'products'), productData)
+        setSuccess('✅ تم إضافة المنتج بنجاح!')
+      }
 
-      setSuccess('✅ تم إضافة المنتج بنجاح!')
-      setName('')
-      setPrice('')
-      setEmoji('')
-      setImage('')
-      setIngredients('')
-      setCategory('food')
-
+      resetForm()
       fetchProducts()
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
       console.error(err)
-      setError('حدث خطأ أثناء الإضافة')
+      setError(editingId ? 'حدث خطأ أثناء التعديل' : 'حدث خطأ أثناء الإضافة')
     } finally {
       setSaving(false)
     }
   }
 
-  // 🗑️ حذف منتج
+  // 🗑️ حذف
   async function handleDelete(id) {
     if (!confirm('هل أنت متأكد من الحذف؟')) return
 
@@ -162,30 +218,6 @@ function Admin() {
     } catch (err) {
       console.error(err)
       setError('خطأ في الحذف')
-    }
-  }
-
-  // ✏️ بدء تعديل منتج
-  function startEdit(product) {
-    setEditingId(product.id)
-    setEditPrice(product.price)
-    setEditName(product.name)
-  }
-
-  // ✏️ حفظ التعديل
-  async function handleSaveEdit(id) {
-    if (!editName || !editPrice) return
-
-    try {
-      await updateDoc(doc(db, 'products', id), {
-        name: editName.trim(),
-        price: Number(editPrice),
-      })
-      setEditingId(null)
-      fetchProducts()
-    } catch (err) {
-      console.error(err)
-      setError('خطأ في التعديل')
     }
   }
 
@@ -244,118 +276,142 @@ function Admin() {
           <p className="loading-text">لا توجد منتجات بعد</p>
         ) : (
           <div className="products-list">
-            {products.map(p => (
-              <div key={p.id} className="product-row">
-                <div className="product-thumb">
-                  {p.image ? (
-                    <img src={p.image} alt={p.name} />
-                  ) : (
-                    <span>{p.emoji || '🍽️'}</span>
-                  )}
-                </div>
+            {products.map(p => {
+              const catLabel = CATEGORIES.find(c => c.value === p.category)?.label || p.category
+              return (
+                <div
+                  key={p.id}
+                  className={`product-row ${editingId === p.id ? 'product-row-editing' : ''}`}
+                >
+                  <div className="product-thumb">
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} />
+                    ) : (
+                      <span>{p.emoji || '🍽️'}</span>
+                    )}
+                  </div>
 
-                {editingId === p.id ? (
-                  <>
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="inline-input"
-                      placeholder="الاسم"
-                    />
-                    <input
-                      type="number"
-                      value={editPrice}
-                      onChange={(e) => setEditPrice(e.target.value)}
-                      className="inline-input inline-price"
-                      placeholder="السعر"
-                    />
-                    <div className="row-actions">
-                      <button
-                        className="btn-mini btn-save-mini"
-                        onClick={() => handleSaveEdit(p.id)}
-                      >
-                        ✓
-                      </button>
-                      <button
-                        className="btn-mini btn-cancel-mini"
-                        onClick={() => setEditingId(null)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="product-row-info">
-                      <h4>{p.name}</h4>
-                      <span className="row-category">
-                        {p.category === 'food' && '🍽️ أكل'}
-                        {p.category === 'sides' && '🥗 مقبلات'}
-                        {p.category === 'drinks' && '🥤 مشاريب'}
-                      </span>
-                    </div>
-                    <div className="row-price">{p.price} ل.س</div>
-                    <div className="row-actions">
-                      <button
-                        className="btn-mini btn-edit-mini"
-                        onClick={() => startEdit(p)}
-                        title="تعديل"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="btn-mini btn-delete-mini"
-                        onClick={() => handleDelete(p.id)}
-                        title="حذف"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+                  <div className="product-row-info">
+                    <h4>{p.name}</h4>
+                    <span className="row-category">{catLabel}</span>
+                  </div>
+
+                  <div className="row-price">
+                    {p.hasTypes ? (
+                      <>
+                        🌯 {p.priceSandwich} | 🍱 {p.priceMeal}
+                      </>
+                    ) : (
+                      <>{p.price} ل.س</>
+                    )}
+                  </div>
+
+                  <div className="row-actions">
+                    <button
+                      className="btn-mini btn-edit-mini"
+                      onClick={() => startEdit(p)}
+                      title="تعديل"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      className="btn-mini btn-delete-mini"
+                      onClick={() => handleDelete(p.id)}
+                      title="حذف"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
 
-      {/* ➕ إضافة منتج جديد */}
+      {/* ➕ / 💾 النموذج */}
       <div className="add-product-section">
-        <h2 className="manager-title">➕ إضافة منتج جديد</h2>
+        <h2 className="manager-title">
+          {editingId ? '✏️ تعديل المنتج' : '➕ إضافة منتج جديد'}
+        </h2>
 
-        <form onSubmit={handleAddProduct} className="product-form">
+        <form onSubmit={handleSubmit} className="product-form">
           <div className="form-group">
             <label>اسم المنتج *</label>
             <input
               type="text"
-              placeholder="مثال: برغر كلاسيك"
+              placeholder="مثال: شاورما دجاج"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
 
-          <div className="form-row">
+          <div className="form-group">
+            <label>التصنيف *</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {CATEGORIES.map(c => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 💰 خيار السندويش/الوجبة */}
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={hasTypes}
+                onChange={(e) => setHasTypes(e.target.checked)}
+              />
+              <span>يدعم سندويش ووجبة (سعرين)</span>
+            </label>
+          </div>
+
+          {/* الأسعار */}
+          {hasTypes ? (
+            <div className="form-row">
+              <div className="form-group">
+                <label>سعر السندويش (ل.س) *</label>
+                <input
+                  type="number"
+                  placeholder="40"
+                  value={priceSandwich}
+                  onChange={(e) => setPriceSandwich(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>سعر الوجبة (ل.س) *</label>
+                <input
+                  type="number"
+                  placeholder="70"
+                  value={priceMeal}
+                  onChange={(e) => setPriceMeal(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : (
             <div className="form-group">
               <label>السعر (ل.س) *</label>
               <input
                 type="number"
-                placeholder="مثال: 50"
+                placeholder="50"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
               />
             </div>
+          )}
 
-            <div className="form-group">
-              <label>الإيموجي</label>
-              <input
-                type="text"
-                placeholder="🍔"
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value)}
-                maxLength={2}
-              />
-            </div>
+          <div className="form-group">
+            <label>الإيموجي (اختياري)</label>
+            <input
+              type="text"
+              placeholder="🍔"
+              value={emoji}
+              onChange={(e) => setEmoji(e.target.value)}
+              maxLength={2}
+            />
           </div>
 
           <div className="form-group">
@@ -373,7 +429,7 @@ function Admin() {
           </div>
 
           <div className="form-group">
-            <label>صورة المنتج (اختياري)</label>
+            <label>صورة المنتج</label>
             <input
               type="file"
               accept="image/*"
@@ -381,7 +437,7 @@ function Admin() {
               className="file-input"
             />
             <small className="form-hint">
-              💡 اختر صورة من جهازك (سيتم ضغطها تلقائياً)
+              💡 اختر صورة جديدة لاستبدالها، أو اتركها فارغة لعدم التغيير
             </small>
           </div>
 
@@ -398,21 +454,28 @@ function Admin() {
             </div>
           )}
 
-          <div className="form-group">
-            <label>التصنيف</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="food">🍽️ أكل</option>
-              <option value="sides">🥗 مقبلات وسلطات</option>
-              <option value="drinks">🥤 مشاريب وحلويات</option>
-            </select>
-          </div>
-
           {error && <div className="admin-error">⚠️ {error}</div>}
           {success && <div className="admin-success">{success}</div>}
 
-          <button type="submit" className="btn-save" disabled={saving}>
-            {saving ? 'جاري الحفظ...' : '➕ إضافة المنتج'}
-          </button>
+          <div className="form-actions">
+            <button type="submit" className="btn-save" disabled={saving}>
+              {saving
+                ? 'جاري الحفظ...'
+                : editingId
+                ? '💾 حفظ التعديل'
+                : '➕ إضافة المنتج'}
+            </button>
+
+            {editingId && (
+              <button
+                type="button"
+                className="btn-cancel-edit"
+                onClick={resetForm}
+              >
+                ✕ إلغاء التعديل
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

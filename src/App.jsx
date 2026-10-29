@@ -3,61 +3,26 @@ import { Routes, Route } from 'react-router-dom'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from './firebase'
 
-import { Swiper, SwiperSlide } from 'swiper/react'
-import { Navigation, Pagination } from 'swiper/modules'
-import 'swiper/css'
-import 'swiper/css/navigation'
-import 'swiper/css/pagination'
-
 import Header from './components/Header'
-import Card from './components/Card'
 import Footer from './components/Footer'
+import CircularGallery from './components/CircularGallery'
 import Admin from './pages/Admin'
 import Cart from './pages/Cart'
 import About from './pages/About'
 import { useCart } from './context/CartContext'
 import './App.css'
 
-function Section({ title, items }) {
-  const { addItem } = useCart()
+const CATEGORIES = [
+  { key: 'meat', label: '🥩 لحم' },
+  { key: 'chicken-grilled', label: '🍗 دجاج مشوي' },
+  { key: 'chicken-fried', label: '🍗 دجاج مقلي' },
+  { key: 'salads', label: '🥗 سلطات' },
+  { key: 'cold-sandwiches', label: '🌯 سندويشات باردة' },
+  { key: 'drinks', label: '🥤 مشاريب وحلويات' },
+]
 
-  if (items.length === 0) return null
-
-  return (
-    <section className="section">
-      <h2 className="section-title">{title}</h2>
-
-      <Swiper
-        modules={[Navigation, Pagination]}
-        spaceBetween={20}
-        slidesPerView={1}
-        navigation
-        pagination={{ clickable: true }}
-        breakpoints={{
-          640: { slidesPerView: 2 },
-          900: { slidesPerView: 3 },
-          1200: { slidesPerView: 4 },
-        }}
-      >
-        {items.map(item => (
-          <SwiperSlide key={item.id}>
-            <Card
-              title={item.name}
-              price={item.price}
-              emoji={item.emoji}
-              image={item.image}
-              ingredients={item.ingredients}
-              onAdd={() => addItem(item)}
-            />
-          </SwiperSlide>
-        ))}
-      </Swiper>
-    </section>
-  )
-}
-
-// 🏠 الصفحة الرئيسية
 function HomePage() {
+  const { addItem } = useCart()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -77,34 +42,24 @@ function HomePage() {
         setLoading(false)
       }
     }
-
     fetchProducts()
   }, [])
 
-  // 🔍 فلترة حسب البحث
   const filteredProducts = searchTerm.trim()
     ? products.filter(p => {
         const term = searchTerm.toLowerCase().trim()
-        const name = (p.name || '').toLowerCase()
-        const ingredients = (p.ingredients || '').toLowerCase()
-        return name.includes(term) || ingredients.includes(term)
+        return (p.name || '').toLowerCase().includes(term) || (p.ingredients || '').toLowerCase().includes(term)
       })
     : products
-
-  const foodItems = filteredProducts.filter(p => p.category === 'food')
-  const sidesItems = filteredProducts.filter(p => p.category === 'sides')
-  const drinksItems = filteredProducts.filter(p => p.category === 'drinks')
 
   const hasResults = filteredProducts.length > 0
 
   return (
     <div>
       <Header />
-
       <main className="main">
         <h1 className="page-title">قائمة Crunchy Bites 🍔</h1>
 
-        {/* 🔍 حقل البحث */}
         <div className="search-wrapper">
           <span className="search-icon">🔍</span>
           <input
@@ -115,35 +70,20 @@ function HomePage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           {searchTerm && (
-            <button
-              className="search-clear"
-              onClick={() => setSearchTerm('')}
-              title="مسح"
-            >
-              ✕
-            </button>
+            <button className="search-clear" onClick={() => setSearchTerm('')}>✕</button>
           )}
         </div>
 
         {loading ? (
-          <p style={{ textAlign: 'center', padding: '40px' }}>
-            جاري التحميل...
-          </p>
+          <p style={{ textAlign: 'center', padding: '40px' }}>جاري التحميل...</p>
         ) : products.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '40px' }}>
-            لا توجد منتجات حالياً
-          </p>
+          <p style={{ textAlign: 'center', padding: '40px' }}>لا توجد منتجات حالياً</p>
         ) : !hasResults ? (
           <div className="no-results">
             <div className="no-results-icon">🔍</div>
             <h3>لا توجد نتائج</h3>
             <p>جرّب كلمة بحث مختلفة</p>
-            <button
-              onClick={() => setSearchTerm('')}
-              className="btn-clear-search"
-            >
-              مسح البحث
-            </button>
+            <button onClick={() => setSearchTerm('')} className="btn-clear-search">مسح البحث</button>
           </div>
         ) : (
           <>
@@ -152,19 +92,25 @@ function HomePage() {
                 نتائج البحث عن "<strong>{searchTerm}</strong>": {filteredProducts.length} طبق
               </p>
             )}
-            <Section title="🍽️ الأكل" items={foodItems} />
-            <Section title="🥗 مقبلات وسلطات" items={sidesItems} />
-            <Section title="🥤 مشاريب وحلويات" items={drinksItems} />
+
+            {CATEGORIES.map(cat => {
+              const catItems = filteredProducts.filter(p => p.category === cat.key)
+              if (catItems.length === 0) return null
+              return (
+                <section key={cat.key} className="section">
+                  <h2 className="section-title">{cat.label}</h2>
+                  <CircularGallery items={catItems} addItem={addItem} />
+                </section>
+              )
+            })}
           </>
         )}
       </main>
-
       <Footer />
     </div>
   )
 }
 
-// 🚦 المسارات
 function App() {
   return (
     <Routes>

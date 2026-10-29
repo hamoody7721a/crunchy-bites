@@ -5,48 +5,74 @@ const CartContext = createContext()
 export function CartProvider({ children }) {
   const [items, setItems] = useState([])
 
-  // إضافة منتج للسلة
-  function addItem(product) {
+  // ➕ إضافة منتج للسلة
+  // type: 'sandwich' أو 'meal' أو 'single'
+  function addItem(product, type = 'single') {
+    // معرف فريد لكل منتج + نوع (عشان السندويش والوجبة ما يتجمعوا)
+    const uniqueId = `${product.id}-${type}`
+
     setItems(prev => {
-      const existing = prev.find(i => i.id === product.id)
+      const existing = prev.find(i => i.uniqueId === uniqueId)
+
       if (existing) {
-        // لو موجود، زيد الكمية
         return prev.map(i =>
-          i.id === product.id
+          i.uniqueId === uniqueId
             ? { ...i, quantity: i.quantity + 1 }
             : i
         )
       }
-      // لو جديد، أضفه بكمية 1
-      return [...prev, { ...product, quantity: 1 }]
+
+      // السعر يعتمد على النوع
+      let price = product.price
+      let typeLabel = ''
+
+      if (type === 'sandwich') {
+        price = product.priceSandwich
+        typeLabel = 'سندويش'
+      } else if (type === 'meal') {
+        price = product.priceMeal
+        typeLabel = 'وجبة'
+      }
+
+      return [
+        ...prev,
+        {
+          ...product,
+          price,
+          type,
+          typeLabel,
+          uniqueId,
+          quantity: 1,
+        },
+      ]
     })
   }
 
-  // حذف منتج
-  function removeItem(id) {
-    setItems(prev => prev.filter(i => i.id !== id))
+  // 🗑️ حذف منتج
+  function removeItem(uniqueId) {
+    setItems(prev => prev.filter(i => i.uniqueId !== uniqueId))
   }
 
-  // تغيير الكمية
-  function updateQuantity(id, quantity) {
+  // 🔢 تغيير الكمية
+  function updateQuantity(uniqueId, quantity) {
     if (quantity <= 0) {
-      removeItem(id)
+      removeItem(uniqueId)
       return
     }
     setItems(prev =>
-      prev.map(i => (i.id === id ? { ...i, quantity } : i))
+      prev.map(i => (i.uniqueId === uniqueId ? { ...i, quantity } : i))
     )
   }
 
-  // إفراغ السلة
+  // 🧹 إفراغ السلة
   function clearCart() {
     setItems([])
   }
 
-  // عدد الأطباق (مجموع الكميات)
+  // 🔢 عدد العناصر
   const count = items.reduce((sum, i) => sum + i.quantity, 0)
 
-  // السعر الإجمالي
+  // 💰 المجموع
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0)
 
   const value = {
@@ -62,7 +88,6 @@ export function CartProvider({ children }) {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
 
-// Custom Hook للاستخدام السهل
 export function useCart() {
   const context = useContext(CartContext)
   if (!context) {
