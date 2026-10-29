@@ -4,6 +4,7 @@ import { useState } from 'react'
 function CircularGallery({ items, addItem }) {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [addedMessage, setAddedMessage] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
   const [hoveredIndex, setHoveredIndex] = useState(null)
 
   if (items.length === 0) return null
@@ -15,36 +16,44 @@ function CircularGallery({ items, addItem }) {
     setTimeout(() => setAddedMessage(''), 2000)
   }
 
+  // دالة التنقل
+  function next() {
+    setActiveIndex((prev) => (prev + 1) % items.length)
+  }
+
+  function prev() {
+    setActiveIndex((prev) => (prev - 1 + items.length) % items.length)
+  }
+
   // حساب شكل الكرت (مروحة)
   function getCardStyle(index) {
-    const center = (items.length - 1) / 2
-    const offset = index - center
-    
-    // إذا كان الكرت هو اللي عليه الماوس، نبعده شوي
+    let diff = index - activeIndex
+    if (diff > items.length / 2) diff -= items.length
+    if (diff < -items.length / 2) diff += items.length
+
     const isHovered = hoveredIndex === index
     const isAnyHovered = hoveredIndex !== null
 
-    // زاوية الكرت
-    const rotate = offset * 12
-    // مسافة الأفقية
-    const translateX = offset * 80
-    // مسافة العمق (البعيد شوي)
-    const translateY = Math.abs(offset) * 20
-    // رفع الكرت عند الهوفر
-    const hoverTranslateY = isHovered ? -40 : 0
-    const hoverScale = isHovered ? 1.08 : 1
+    // زاوية ومسافة الكرت
+    const rotate = diff * 12
+    const translateX = diff * 80
+    const translateY = Math.abs(diff) * 20
+    const hoverTranslateY = isHovered ? -30 : 0
+    const hoverScale = isHovered ? 1.05 : 1
+    // إذا كان الكرت بعيد جداً نخفيه
+    const isHidden = Math.abs(diff) > 3
 
     return {
-      zIndex: isHovered ? 50 : index,
+      zIndex: isHovered ? 50 : (10 - Math.abs(diff)),
       transform: `
         translateX(${translateX}px) 
         translateY(${translateY + hoverTranslateY}px) 
         rotate(${rotate}deg) 
         scale(${hoverScale})
       `,
-      // الكروت اللي مو الماوس عليها تظلم شوي
-      opacity: isAnyHovered && !isHovered ? 0.7 : 1,
+      opacity: isHidden ? 0 : (isAnyHovered && !isHovered ? 0.7 : 1),
       filter: isAnyHovered && !isHovered ? 'brightness(0.7)' : 'brightness(1)',
+      pointerEvents: isHidden ? 'none' : 'auto',
     }
   }
 
@@ -94,6 +103,23 @@ function CircularGallery({ items, addItem }) {
               </div>
             </motion.div>
           ))}
+        </div>
+
+        {/* 🎯 أزرار التحكم والنقاط (الجديدة) */}
+        <div className="fan-carousel-controls">
+          <button className="fan-nav-btn" onClick={prev}>◀</button>
+          
+          <div className="fan-dots">
+            {items.map((_, idx) => (
+              <div 
+                key={idx} 
+                className={`fan-dot ${idx === activeIndex ? 'active' : ''}`}
+                onClick={() => setActiveIndex(idx)}
+              />
+            ))}
+          </div>
+
+          <button className="fan-nav-btn" onClick={next}>▶</button>
         </div>
       </div>
 
