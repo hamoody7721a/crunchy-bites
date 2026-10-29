@@ -1,71 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 
 function CircularGallery({ items, addItem }) {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [addedMessage, setAddedMessage] = useState('')
-  const [activeIndex, setActiveIndex] = useState(0)
-  
-  // حالة السحب
-  const dragStartX = useRef(null)
-  const dragStartY = useRef(null)
-  const isDragging = useRef(false)
-
-  // تحريك تلقائي
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
-
-  useEffect(() => {
-    if (items.length <= 1 || !isAutoPlaying) return
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % items.length)
-    }, 3500)
-    return () => clearInterval(interval)
-  }, [items.length, isAutoPlaying])
+  const [hoveredIndex, setHoveredIndex] = useState(null)
 
   if (items.length === 0) return null
-
-  function next() {
-    setActiveIndex((prev) => (prev + 1) % items.length)
-    setIsAutoPlaying(false)
-  }
-
-  function prev() {
-    setActiveIndex((prev) => (prev - 1 + items.length) % items.length)
-    setIsAutoPlaying(false)
-  }
-
-  // 🖱️📱 دعم السحب (ماوس + لمس)
-  function handleDragStart(clientX, clientY) {
-    dragStartX.current = clientX
-    dragStartY.current = clientY
-    isDragging.current = false
-    setIsAutoPlaying(false)
-  }
-
-  function handleDragMove(clientX, clientY) {
-    if (dragStartX.current === null) return
-    const diffX = Math.abs(clientX - dragStartX.current)
-    const diffY = Math.abs(clientY - dragStartY.current)
-    
-    // إذا تحرك أكثر من 10 بكسل، نعتبره سحب
-    if (diffX > 10 || diffY > 10) {
-      isDragging.current = true
-    }
-  }
-
-  function handleDragEnd(clientX) {
-    if (dragStartX.current === null) return
-    const dragDistance = clientX - dragStartX.current
-    
-    if (dragDistance > 50) {
-      prev()
-    } else if (dragDistance < -50) {
-      next()
-    }
-    
-    dragStartX.current = null
-    dragStartY.current = null
-  }
 
   function handleAdd(product, type) {
     addItem(product, type)
@@ -74,18 +15,36 @@ function CircularGallery({ items, addItem }) {
     setTimeout(() => setAddedMessage(''), 2000)
   }
 
+  // حساب شكل الكرت (مروحة)
   function getCardStyle(index) {
-    let diff = index - activeIndex
-    if (diff > items.length / 2) diff -= items.length
-    if (diff < -items.length / 2) diff += items.length
-    const isHidden = Math.abs(diff) > 2
+    const center = (items.length - 1) / 2
+    const offset = index - center
+    
+    // إذا كان الكرت هو اللي عليه الماوس، نبعده شوي
+    const isHovered = hoveredIndex === index
+    const isAnyHovered = hoveredIndex !== null
+
+    // زاوية الكرت
+    const rotate = offset * 12
+    // مسافة الأفقية
+    const translateX = offset * 80
+    // مسافة العمق (البعيد شوي)
+    const translateY = Math.abs(offset) * 20
+    // رفع الكرت عند الهوفر
+    const hoverTranslateY = isHovered ? -40 : 0
+    const hoverScale = isHovered ? 1.08 : 1
 
     return {
-      zIndex: 10 - Math.abs(diff),
-      transform: `translateX(${diff * 160}px) translateZ(${Math.abs(diff) * -120}px) rotateY(${diff * -30}deg) scale(${diff === 0 ? 1.05 : 0.85})`,
-      opacity: isHidden ? 0 : 1,
-      pointerEvents: isHidden ? 'none' : 'auto',
-      display: isHidden ? 'none' : 'block',
+      zIndex: isHovered ? 50 : index,
+      transform: `
+        translateX(${translateX}px) 
+        translateY(${translateY + hoverTranslateY}px) 
+        rotate(${rotate}deg) 
+        scale(${hoverScale})
+      `,
+      // الكروت اللي مو الماوس عليها تظلم شوي
+      opacity: isAnyHovered && !isHovered ? 0.7 : 1,
+      filter: isAnyHovered && !isHovered ? 'brightness(0.7)' : 'brightness(1)',
     }
   }
 
@@ -104,53 +63,41 @@ function CircularGallery({ items, addItem }) {
         )}
       </AnimatePresence>
 
-      <div 
-        className="custom-carousel-container"
-        // دعم الماوس
-        onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
-        onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
-        onMouseUp={(e) => handleDragEnd(e.clientX)}
-        onMouseLeave={() => { dragStartX.current = null; setIsAutoPlaying(true) }}
-        // دعم اللمس
-        onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
-        onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
-        onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
-        onMouseEnter={() => setIsAutoPlaying(false)}
-      >
-        <div className="custom-carousel-stage">
+      {/* السلايدر (مروحة الكروت) */}
+      <div className="fan-carousel-container">
+        <div className="fan-carousel-stage">
           {items.map((item, index) => (
             <motion.div
               key={item.id}
-              className="custom-slide"
+              className="fan-card-wrapper"
               style={getCardStyle(index)}
               initial={false}
               animate={getCardStyle(index)}
-              transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-              onClick={() => {
-                // نفتح المودال فقط إذا ما كان المستخدم يسحب
-                if (!isDragging.current) {
-                  setSelectedProduct(item)
-                }
-              }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              onClick={() => setSelectedProduct(item)}
             >
-              <div className="modern-card">
+              <div className="fan-card">
                 {item.image ? (
-                  <img src={item.image} alt={item.name} className="modern-card-image" />
+                  <img src={item.image} alt={item.name} className="fan-card-image" />
                 ) : (
-                  <div className="modern-card-emoji">{item.emoji || '🍽️'}</div>
+                  <div className="fan-card-emoji">{item.emoji || '🍽️'}</div>
                 )}
-                <div className="modern-card-overlay">
+                
+                <div className="fan-card-overlay">
                   <h3>{item.name}</h3>
+                  <span className="fan-card-price">
+                    {item.hasTypes ? `يبدأ من ${item.priceSandwich} ل.س` : `${item.price} ل.س`}
+                  </span>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
-
-        <button className="carousel-nav-btn prev" onClick={(e) => { e.stopPropagation(); prev(); }}>◀</button>
-        <button className="carousel-nav-btn next" onClick={(e) => { e.stopPropagation(); next(); }}>▶</button>
       </div>
 
+      {/* المودال */}
       <AnimatePresence>
         {selectedProduct && (
           <motion.div
