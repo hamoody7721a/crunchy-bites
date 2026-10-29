@@ -6,10 +6,12 @@ function CircularGallery({ items, addItem }) {
   const [addedMessage, setAddedMessage] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   
-  // لحالة السحب
+  // حالة السحب
   const dragStartX = useRef(null)
+  const dragStartY = useRef(null)
+  const isDragging = useRef(false)
 
-  // تحريك تلقائي (يتوقف عند التفاعل)
+  // تحريك تلقائي
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
   useEffect(() => {
@@ -22,7 +24,6 @@ function CircularGallery({ items, addItem }) {
 
   if (items.length === 0) return null
 
-  // دوال التنقل
   function next() {
     setActiveIndex((prev) => (prev + 1) % items.length)
     setIsAutoPlaying(false)
@@ -33,17 +34,29 @@ function CircularGallery({ items, addItem }) {
     setIsAutoPlaying(false)
   }
 
-  // دوال السحب (Drag)
-  function handlePointerDown(e) {
-    dragStartX.current = e.clientX
+  // 🖱️📱 دعم السحب (ماوس + لمس)
+  function handleDragStart(clientX, clientY) {
+    dragStartX.current = clientX
+    dragStartY.current = clientY
+    isDragging.current = false
     setIsAutoPlaying(false)
   }
 
-  function handlePointerUp(e) {
+  function handleDragMove(clientX, clientY) {
     if (dragStartX.current === null) return
-    const dragDistance = e.clientX - dragStartX.current
+    const diffX = Math.abs(clientX - dragStartX.current)
+    const diffY = Math.abs(clientY - dragStartY.current)
     
-    // إذا سحب مسافة كافية، نغير الكرت
+    // إذا تحرك أكثر من 10 بكسل، نعتبره سحب
+    if (diffX > 10 || diffY > 10) {
+      isDragging.current = true
+    }
+  }
+
+  function handleDragEnd(clientX) {
+    if (dragStartX.current === null) return
+    const dragDistance = clientX - dragStartX.current
+    
     if (dragDistance > 50) {
       prev()
     } else if (dragDistance < -50) {
@@ -51,6 +64,7 @@ function CircularGallery({ items, addItem }) {
     }
     
     dragStartX.current = null
+    dragStartY.current = null
   }
 
   function handleAdd(product, type) {
@@ -60,13 +74,10 @@ function CircularGallery({ items, addItem }) {
     setTimeout(() => setAddedMessage(''), 2000)
   }
 
-  // حساب شكل الكرت
   function getCardStyle(index) {
     let diff = index - activeIndex
     if (diff > items.length / 2) diff -= items.length
     if (diff < -items.length / 2) diff += items.length
-
-    // إخفاء الكروت البعيدة جداً
     const isHidden = Math.abs(diff) > 2
 
     return {
@@ -93,13 +104,18 @@ function CircularGallery({ items, addItem }) {
         )}
       </AnimatePresence>
 
-      {/* السلايدر */}
       <div 
         className="custom-carousel-container"
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
+        // دعم الماوس
+        onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
+        onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
+        onMouseUp={(e) => handleDragEnd(e.clientX)}
+        onMouseLeave={() => { dragStartX.current = null; setIsAutoPlaying(true) }}
+        // دعم اللمس
+        onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
+        onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
+        onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
         onMouseEnter={() => setIsAutoPlaying(false)}
-        onMouseLeave={() => setIsAutoPlaying(true)}
       >
         <div className="custom-carousel-stage">
           {items.map((item, index) => (
@@ -111,8 +127,8 @@ function CircularGallery({ items, addItem }) {
               animate={getCardStyle(index)}
               transition={{ type: 'spring', stiffness: 200, damping: 25 }}
               onClick={() => {
-                // نتأكد إنه ما كان في سحب
-                if (dragStartX.current === null) {
+                // نفتح المودال فقط إذا ما كان المستخدم يسحب
+                if (!isDragging.current) {
                   setSelectedProduct(item)
                 }
               }}
@@ -131,12 +147,10 @@ function CircularGallery({ items, addItem }) {
           ))}
         </div>
 
-        {/* أزرار التنقل */}
-        <button className="carousel-nav-btn prev" onClick={prev}>◀</button>
-        <button className="carousel-nav-btn next" onClick={next}>▶</button>
+        <button className="carousel-nav-btn prev" onClick={(e) => { e.stopPropagation(); prev(); }}>◀</button>
+        <button className="carousel-nav-btn next" onClick={(e) => { e.stopPropagation(); next(); }}>▶</button>
       </div>
 
-      {/* النافذة المنبثقة (Modal) */}
       <AnimatePresence>
         {selectedProduct && (
           <motion.div

@@ -686,3 +686,36 @@
   .custom-carousel-container { height: 360px; }
   .custom-slide { width: 220px; height: 300px; }
 }
+/* ===== Mobile Carousel Fixes ===== */
+@media (max-width: 768px) {
+  .custom-carousel-container {
+    height: 400px;
+  }
+  
+  .custom-slide {
+    width: 240px;
+    height: 330px;
+  }
+
+  /* إظهار أزرار التنقل على الموبايل */
+  .carousel-nav-btn {
+    display: flex;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .carousel-nav-btn.prev { left: 10px; }
+  .carousel-nav-btn.next { right: 10px; }
+}
+
+@media (max-width: 400px) {
+  .custom-carousel-container {
+    height: 360px;
+  }
+  
+  .custom-slide {
+    width: 220px;
+    height: 300px;
+  }
+}
